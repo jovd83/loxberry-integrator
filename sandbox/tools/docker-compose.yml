@@ -1,0 +1,54 @@
+# LoxBerry sandbox in Docker — for plugin smoke-testing on Windows.
+#
+# Use:
+#   cd c:/projects/skills/loxberry-integrator/sandbox/tools
+#   docker compose up -d                # start (creates the named container + volumes)
+#   docker compose logs -f loxberry     # watch boot
+#   docker compose stop                 # pause (state persists)
+#   docker compose start                # resume
+#   docker compose down                 # remove container (volumes stay)
+#   docker compose down -v              # WIPE everything including config/plugins
+#
+# Web UI:   http://localhost:18080  (admin/admin or loxberry/loxberry — see image docs)
+# MQTT:     localhost:1883
+#
+# Container name is fixed so we can `docker exec -it loxberry-sandbox bash`
+# and predictably find it between sessions.
+
+services:
+  loxberry:
+    image: boernmasta/loxberry:latest
+    container_name: loxberry-sandbox
+    hostname: loxberry-sandbox
+    restart: unless-stopped
+    # LoxBerry uses systemd; needs full privileged + host cgroup ns on
+    # Docker Desktop / WSL2, otherwise systemd exits 255 in <1s.
+    privileged: true
+    cgroup: host
+    security_opt:
+      - seccomp:unconfined
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      # Persistent state — survives `docker compose down`
+      - loxberry-config:/opt/loxberry/config
+      - loxberry-data:/opt/loxberry/data
+      - loxberry-log:/opt/loxberry/log
+      - loxberry-plugins:/opt/loxberry/webfrontend/htmlauth/plugins
+      # Drop-in: the freshly-built marstek-cloud install ZIP is exposed
+      # read-only inside the container, ready to be uploaded via the web UI
+      # (or installed manually with the LoxBerry CLI).
+      - ../marstek-cloud-0.1.0.zip:/incoming/marstek-cloud-0.1.0.zip:ro
+    ports:
+      - "18080:80"     # web UI
+      - "1883:1883"    # MQTT (if the MQTT Gateway plugin is installed)
+      - "8883:8883"    # MQTT TLS
+      # SSH and FTP intentionally not exposed by default
+
+volumes:
+  loxberry-config:
+  loxberry-data:
+  loxberry-log:
+  loxberry-plugins:

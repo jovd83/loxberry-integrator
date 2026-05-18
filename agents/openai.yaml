@@ -1,0 +1,3 @@
+display_name: LoxBerry Integrator
+short_description: Generate and validate LoxBerry plugins for Loxone integrations.
+default_prompt: Generate a GitHub-ready LoxBerry plugin that integrates a device or service with a Loxone Miniserver, including plugin metadata, daemon code, web UI configuration, MQTT or protocol mapping, documentation, and validation notes.

@@ -1,0 +1,27 @@
+# Skill source — sandbox content is workspace-only and not part of the
+# published skill. The sandbox/tools/ directory IS part of the skill
+# (referenced by SKILL.md → Mandatory Final Steps → Sandbox bootstrap);
+# the experiment subdirectories below are not.
+
+# Generated plugin experiments — each has (or will have) its own repo.
+sandbox/Marstek-cloud/
+sandbox/LoxBerry-Plugin-marstek-venus-e-localapi/
+
+# Build artefacts from sandbox iterations.
+sandbox/*.zip
+sandbox/_stage/
+sandbox/_zipstage/
+
+# Python noise.
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor noise.
+.vscode/
+.idea/
+*.swp
+
+# OS noise.
+.DS_Store
+Thumbs.db

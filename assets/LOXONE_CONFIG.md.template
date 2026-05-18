@@ -1,0 +1,72 @@
+# Loxone Config Setup for {Plugin Display Title}
+
+This guide connects `{Plugin Display Title}` to a Loxone Miniserver.
+
+## MQTT Gateway Setup
+
+Use this method for the default MQTT bridge.
+
+1. Open the `{Plugin Display Title}` page in LoxBerry and save the configuration.
+2. Confirm the daemon is running.
+3. Open the MQTT Gateway plugin.
+4. Go to Incoming Overview.
+5. Confirm these topics appear:
+
+| MQTT topic | Suggested Virtual Input name |
+|---|---|
+| `{plugin_name}/main/{datapoint1}` | `{plugin_name}/main/{datapoint1}` |
+| `{plugin_name}/main/{datapoint2}` | `{plugin_name}/main/{datapoint2}` |
+
+6. Convert each topic to a Miniserver Virtual Input.
+7. Open Loxone Config.
+8. Create a Virtual Input for each converted topic.
+9. Use the exact Miniserver Virtual Input name shown by MQTT Gateway. Names are case-sensitive.
+10. Save the configuration to the Miniserver.
+
+## Optional Commands
+
+Use this section only when the plugin supports outbound control.
+
+1. In Loxone Config, create a Virtual Output Connector.
+2. Set the address to:
+
+```text
+http://{LoxBerry_IP}
+```
+
+3. Add a Virtual Output Command for each supported command.
+4. Use the generated command URL from the plugin README.
+5. Test each command with a non-critical device state first.
+
+Example command URL:
+
+```text
+/plugins/{plugin_name}/index.cgi?action=set&item={item}&value=1
+```
+
+## UDP Setup
+
+Use this section only for a generated UDP relay.
+
+1. In Loxone Config, create a Virtual UDP Input.
+2. Set the UDP port to `{udp_port}`.
+3. Set the expected sender address to the LoxBerry IP.
+4. Open UDP Monitor.
+5. Trigger or wait for a packet.
+6. Add Virtual I/O entries from the observed payloads.
+
+## Verification
+
+- MQTT Gateway shows current values for `{plugin_name}/#`.
+- Loxone Config Virtual Input names match the MQTT Gateway mapping exactly.
+- Plugin logs show successful polling or event handling.
+- No credentials appear in logs.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Topic visible in MQTT but not in Loxone | Virtual Input name mismatch | Copy the name from MQTT Gateway exactly |
+| No MQTT topics | Daemon is stopped or cannot reach the device | Check plugin logs and network settings |
+| Values are stale | Poll interval too long or source unavailable | Check logs and source device availability |
+| Commands fail | Missing auth or invalid command value | Check plugin config and allowed command list |

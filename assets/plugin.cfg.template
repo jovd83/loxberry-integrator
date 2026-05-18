@@ -1,0 +1,21 @@
+[AUTHOR]
+NAME={author_name}
+EMAIL={author_email}
+
+[PLUGIN]
+VERSION=0.1.0
+NAME={plugin_name_lowercase}
+FOLDER={plugin_name_lowercase}
+TITLE={Plugin Display Title}
+INTERFACE=2.0
+
+[AUTOUPDATE]
+AUTOMATIC_UPDATES=true
+RELEASECFG=https://raw.githubusercontent.com/{github_owner}/{github_repo}/main/release.cfg
+PRERELEASECFG=https://raw.githubusercontent.com/{github_owner}/{github_repo}/main/prerelease.cfg
+
+[SYSTEM]
+LB_MINIMUM=3.0.0
+REBOOT=false
+ARCHITECTURE=all
+CUSTOM_LOGLEVELS=true

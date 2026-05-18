@@ -1,0 +1,91 @@
+# {Plugin Display Title}
+
+A LoxBerry plugin that integrates {device/service} with a Loxone Miniserver.
+
+![LoxBerry](https://img.shields.io/badge/LoxBerry-3.0%2B-green)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
+![Version](https://img.shields.io/badge/version-0.1.0-orange)
+
+## What It Does
+
+{Briefly describe the integration, protocol, direction, and data points.}
+
+## Requirements
+
+- LoxBerry 3.0 or newer
+- MQTT Gateway plugin, unless this integration is explicitly configured for UDP or direct REST
+- Network access from LoxBerry to `{device/service}`
+- Python 3 and the dependencies listed below
+
+## Dependencies
+
+```bash
+pip3 install {python_dependencies}
+```
+
+If your LoxBerry installation manages Python packages differently, install these dependencies according to your local LoxBerry policy.
+
+## Installation
+
+1. Download the latest release ZIP from [GitHub Releases](https://github.com/{github_owner}/{github_repo}/releases).
+2. Open LoxBerry.
+3. Go to Plugin Management.
+4. Upload the release ZIP.
+5. Open the plugin configuration page and save the required settings.
+
+## Configuration
+
+Open `Plugins -> {Plugin Display Title}` in the LoxBerry web UI.
+
+| Setting | Description |
+|---|---|
+| Device host or IP | Hostname or IP of the device when applicable |
+| API URL | API endpoint when using REST or cloud polling |
+| API key or token | Secret used for authentication; leave empty when not required |
+| Poll interval | Polling interval in seconds; keep conservative for cloud APIs |
+
+## MQTT Topics
+
+The plugin publishes values under:
+
+```text
+{plugin_name}/{device_id}/{datapoint}
+```
+
+| Topic | Description | Unit |
+|---|---|---|
+| `{plugin_name}/main/{datapoint1}` | {Description} | {Unit} |
+| `{plugin_name}/main/{datapoint2}` | {Description} | {Unit} |
+
+## Loxone Config
+
+Follow [docs/LOXONE_CONFIG.md](docs/LOXONE_CONFIG.md) to create Virtual Inputs, map MQTT Gateway topics, and configure optional commands.
+
+## Logs
+
+View logs in the LoxBerry web UI under the plugin log section, or via SSH:
+
+```bash
+cat /opt/loxberry/log/plugins/{plugin_name}/{plugin_name}.log
+```
+
+## Troubleshooting
+
+| Problem | Check |
+|---|---|
+| No values in Loxone | Confirm MQTT Gateway sees `{plugin_name}/#` and Virtual Input names match exactly |
+| Daemon does not start | Check executable permissions and Python dependencies |
+| MQTT connection refused | Confirm Mosquitto and MQTT Gateway are running |
+| Authentication errors | Re-enter credentials and confirm the account has API access |
+| Cloud API throttling | Increase the poll interval |
+
+## Security Notes
+
+- Do not commit real credentials.
+- Limit API tokens to the permissions required by this plugin.
+- Prefer local network integrations when available.
+- Review logs before sharing them because device IDs and hostnames may be sensitive.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
