@@ -11,6 +11,7 @@ sandbox/LoxBerry-Plugin-marstek-venus-e-localapi/
 sandbox/*.zip
 sandbox/_stage/
 sandbox/_zipstage/
+examples/
 
 # Python noise.
 __pycache__/
