@@ -1,5 +1,10 @@
 # LoxBerry Integrator AgentSkill
 
+[![Validate Skills](https://github.com/jovd83/loxberry-integrator/actions/workflows/ci.yml/badge.svg)](https://github.com/jovd83/loxberry-integrator/actions/workflows/ci.yml)
+[![version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/jovd83)
+
 `loxberry-integrator` is an agentSkill that generates, reviews, and hardens GitHub-ready LoxBerry plugin repositories for Loxone Miniserver integrations.
 
 It is designed for integrations such as cloud API bridges, local REST gateways, MQTT topic mappers, UDP relays, Modbus TCP polling plugins, and command bridges from Loxone to external services.
@@ -114,4 +119,4 @@ Shared memory is intentionally out of scope. If an organization wants reusable d
 
 ## License
 
-Apache License 2.0.
+MIT — see [LICENSE](LICENSE).

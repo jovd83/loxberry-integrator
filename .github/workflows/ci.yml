@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify skill structure
+        run: |
+          set -e
+          test -f SKILL.md                                    || { echo "SKILL.md missing"; exit 1; }
+          test -f README.md                                   || { echo "README.md missing"; exit 1; }
+          test -f LICENSE                                     || { echo "LICENSE missing"; exit 1; }
+          test -d assets                                      || { echo "assets/ missing"; exit 1; }
+          test -d references                                  || { echo "references/ missing"; exit 1; }
+          test -d scripts                                     || { echo "scripts/ missing"; exit 1; }
+          test -f scripts/validate_plugin.py                  || { echo "scripts/validate_plugin.py missing"; exit 1; }
+          test -f assets/plugin.cfg.template                  || { echo "assets/plugin.cfg.template missing"; exit 1; }
+          test -f assets/daemon.template                      || { echo "assets/daemon.template missing"; exit 1; }
+          test -f assets/index.cgi.template                   || { echo "assets/index.cgi.template missing"; exit 1; }
+          test -f assets/settings.html.template               || { echo "assets/settings.html.template missing"; exit 1; }
+          test -f assets/default.json.template                || { echo "assets/default.json.template missing"; exit 1; }
+          test -f references/integration-patterns.md          || { echo "references/integration-patterns.md missing"; exit 1; }
+          test -f references/loxberry-api-reference.md        || { echo "references/loxberry-api-reference.md missing"; exit 1; }
+          echo "Skill structure OK."
+
+      - name: Verify SKILL.md frontmatter
+        run: |
+          set -e
+          head -1 SKILL.md | grep -q '^---$' || { echo "SKILL.md does not start with --- frontmatter"; exit 1; }
+          grep -q '^name:' SKILL.md          || { echo "SKILL.md frontmatter missing 'name'"; exit 1; }
+          grep -q '^description:' SKILL.md   || { echo "SKILL.md frontmatter missing 'description'"; exit 1; }
+          echo "SKILL.md frontmatter OK."
+
+      - name: Syntax-check the plugin validator
+        run: python -m py_compile scripts/validate_plugin.py
+
+      - name: Validate the assets/ templates as a synthetic plugin
+        # Build a minimal plugin from the bundled templates and run the
+        # validator on it. This guards against regressions where a template
+        # update would break the next generated plugin.
+        run: |
+          set -e
+          mkdir -p /tmp/fixture-plugin/bin /tmp/fixture-plugin/config /tmp/fixture-plugin/daemon \
+                   /tmp/fixture-plugin/docs /tmp/fixture-plugin/templates \
+                   /tmp/fixture-plugin/webfrontend/htmlauth
+
+          # Substitute template placeholders {plugin} / {Plugin Display Title} / {owner} / {repo}
+          # with a fixture identity, then materialise each plugin file.
+          PLUGIN=fixture-plugin
+          subst() { sed -e "s/{plugin}/$PLUGIN/g" -e "s/{Plugin Display Title}/Fixture Plugin/g" \
+                        -e "s/{owner}/jovd83/g" -e "s/{repo}/fixture-plugin/g" "$1"; }
+
+          cat > /tmp/fixture-plugin/plugin.cfg <<'EOF'
+          [AUTHOR]
+          NAME=jovd83
+          EMAIL=jovd83@users.noreply.github.com
+          [PLUGIN]
+          VERSION=0.0.1
+          NAME=fixture-plugin
+          FOLDER=fixture-plugin
+          TITLE=Fixture Plugin
+          [AUTOUPDATE]
+          AUTOMATIC_UPDATES=false
+          RELEASECFG=https://example.invalid/release.cfg
+          PRERELEASECFG=https://example.invalid/prerelease.cfg
+          [SYSTEM]
+          LB_MINIMUM=3.0.0
+          REBOOT=false
+          ARCHITECTURE=""
+          CUSTOM_LOGLEVELS=true
+          INTERFACE=2.0
+          EOF
+
+          cat > /tmp/fixture-plugin/release.cfg <<'EOF'
+          [RELEASE]
+          VERSION=0.0.1
+          URL=https://example.invalid/fixture-plugin-0.0.1.zip
+          INFO=https://example.invalid/v0.0.1
+          EOF
+          cp /tmp/fixture-plugin/release.cfg /tmp/fixture-plugin/prerelease.cfg
+
+          cp LICENSE                        /tmp/fixture-plugin/LICENSE
+          echo "# Fixture Plugin"         > /tmp/fixture-plugin/README.md
+          echo "fixture-plugin/main/status" > /tmp/fixture-plugin/docs/LOXONE_CONFIG.md
+
+          # Minimal Python daemon that satisfies the validator's heuristics
+          cat > /tmp/fixture-plugin/bin/fixture-plugin.py <<'EOF'
+          #!/usr/bin/env python3
+          """Fixture plugin daemon (CI validator target, not for runtime)."""
+          import os, signal, sys
+          # References LBPCONFIGDIR / LBPLOGDIR for the validator
+          os.environ.get("LBPCONFIGDIR")
+          os.environ.get("LBPLOGDIR")
+          def _stop(*_): sys.exit(0)
+          signal.signal(signal.SIGTERM, _stop)
+          signal.signal(signal.SIGINT,  _stop)
+          if __name__ == "__main__": _stop()
+          EOF
+
+          subst assets/daemon.template       > /tmp/fixture-plugin/daemon/daemon
+          subst assets/default.json.template > /tmp/fixture-plugin/config/default.json
+          subst assets/index.cgi.template    > /tmp/fixture-plugin/webfrontend/htmlauth/index.cgi
+          subst assets/settings.html.template > /tmp/fixture-plugin/templates/settings.html
+
+          python scripts/validate_plugin.py /tmp/fixture-plugin
