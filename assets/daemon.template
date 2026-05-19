@@ -2,17 +2,25 @@
 # LoxBerry daemon wrapper for {plugin_name}.
 #
 # Two invocation contexts; both must work:
-#   (1) no-arg, as root — /etc/systemd/system/loxberry.service at boot. None of
-#       LBPBINDIR/LBPCONFIGDIR/LBPLOGDIR are exported in this context, so
-#       derive everything from a hardcoded plugin folder name + LBHOMEDIR.
+#   (1) no-arg, as root — loxberry.service at boot. LBHOMEDIR and the LBP*
+#       parent dirs (LBPBIN/LBPCONFIG/LBPLOG/…) are exported by
+#       /etc/environment and inherited from the unit's EnvironmentFile=.
+#       The per-plugin LBP*DIR (e.g. LBPBINDIR=$LBPBIN/$plugin) are NOT,
+#       so derive those below from a hardcoded plugin folder name.
 #   (2) {start|stop|restart|status}, as the loxberry user — from the plugin's
 #       web UI ("Save and restart daemon"). `su loxberry` will fail under
 #       Apache so we fork directly when the current user already matches.
+#
+# Do NOT hardcode the LoxBerry install root anywhere in this file. The
+# installer's hardcoded-path linter does `grep -l` on this script for it.
 
 set -eu
 
+# Belt-and-suspenders: if invoked outside loxberry.service (e.g. by hand),
+# source /etc/environment so LBHOMEDIR etc. are still available.
+[ -z "${LBHOMEDIR:-}" ] && [ -r /etc/environment ] && . /etc/environment
+
 PLUGINNAME="{plugin_name}"
-LBHOMEDIR="${LBHOMEDIR:-/opt/loxberry}"
 DAEMON_USER="loxberry"
 DAEMON_PATH="${LBHOMEDIR}/bin/plugins/${PLUGINNAME}/${PLUGINNAME}.py"
 LOGDIR="${LBHOMEDIR}/log/plugins/${PLUGINNAME}"

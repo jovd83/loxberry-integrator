@@ -149,6 +149,32 @@ def validate_text(root: Path, plugin_name: str) -> list[str]:
         except Exception as err:
             issues.append(warn(f"could not parse config/default.json: {err}"))
 
+    # Mirror the LoxBerry installer's hardcoded-path linter:
+    # `grep -l '/opt/loxberry'` is run on shipped daemon/CGI/Python/Perl files
+    # and any match emits a WARN: "HARDCODED PATH'S: should be fixed by Plugin
+    # author". Even an occurrence inside a comment trips it. Use $LBHOMEDIR /
+    # $lbhomedir / os.environ["LBHOMEDIR"] instead.
+    hardcode_re = re.compile(r"/opt/loxberry")
+    scan_globs = ("bin/**/*.py", "daemon/**", "webfrontend/**/*.cgi",
+                  "scripts/**/*.sh", "*.pl", "**/*.sh")
+    for glob_pat in scan_globs:
+        for f in root.glob(glob_pat):
+            if not f.is_file():
+                continue
+            # Skip *our own* validator-noise scripts and binary blobs.
+            if f.suffix in (".png", ".jpg", ".gif", ".pdf", ".zip", ".pyc"):
+                continue
+            try:
+                ftext = f.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeError):
+                continue
+            if hardcode_re.search(ftext):
+                issues.append(fail(
+                    f"{f.relative_to(root)} contains a `/opt/loxberry` literal; "
+                    "the LoxBerry installer will emit a HARDCODED PATH warning. "
+                    "Use $LBHOMEDIR / $lbhomedir / os.environ[\"LBHOMEDIR\"]."
+                ))
+
     # dpkg/apt should declare paho-mqtt as a Debian package, not in requirements.txt.
     apt_file = root / "dpkg" / "apt"
     req_file = root / "requirements.txt"

@@ -37,10 +37,11 @@ services:
       - loxberry-data:/opt/loxberry/data
       - loxberry-log:/opt/loxberry/log
       - loxberry-plugins:/opt/loxberry/webfrontend/htmlauth/plugins
-      # Drop-in: the freshly-built marstek-cloud install ZIP is exposed
-      # read-only inside the container, ready to be uploaded via the web UI
-      # (or installed manually with the LoxBerry CLI).
-      - ../marstek-cloud-0.1.0.zip:/incoming/marstek-cloud-0.1.0.zip:ro
+      # Drop-in: the whole sandbox/ directory is exposed read-only at
+      # /incoming/ so any freshly-built plugin ZIP (regardless of version)
+      # is visible inside the container, ready to install via the web UI
+      # or the LoxBerry CLI.
+      - ../:/incoming/:ro
     ports:
       - "18080:80"     # web UI
       - "1883:1883"    # MQTT (if the MQTT Gateway plugin is installed)
