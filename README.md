@@ -1,6 +1,6 @@
 # LoxBerry Integrator AgentSkill
 
-`loxberry-integrator` helps Codex generate, review, and harden GitHub-ready LoxBerry plugin repositories for Loxone Miniserver integrations.
+`loxberry-integrator` is an agentSkill that generates, reviews, and hardens GitHub-ready LoxBerry plugin repositories for Loxone Miniserver integrations.
 
 It is designed for integrations such as cloud API bridges, local REST gateways, MQTT topic mappers, UDP relays, Modbus TCP polling plugins, and command bridges from Loxone to external services.
 
@@ -36,13 +36,16 @@ loxberry-integrator/
 
 ## Installation
 
-Place this folder in your Codex/AgentSkills skills directory and ensure the folder name remains `loxberry-integrator`.
-
-The required skill entry point is:
-
-```text
-SKILL.md
+```bash
+npx skills install jovd83/loxberry-integrator
 ```
+
+This drops the skill into your AgentSkills directory under the folder
+name `loxberry-integrator` (the name is load-bearing — do not rename).
+
+Manual alternative: clone or download the repo and place the folder in
+your Codex / AgentSkills skills directory. The required skill entry
+point is `SKILL.md`.
 
 ## Validation
 
