@@ -47,6 +47,53 @@ Manual alternative: clone or download the repo and place the folder in
 your Codex / AgentSkills skills directory. The required skill entry
 point is `SKILL.md`.
 
+## Testing in a sandbox (dockerized LoxBerry)
+
+The skill is built around a no-touch test loop: after generating a
+plugin it installs it into a real, running LoxBerry and iterates until
+the daemon publishes data cleanly. The sandbox is a **dockerized
+LoxBerry 3.0.x** (image: [`boernmasta/loxberry`](https://hub.docker.com/r/boernmasta/loxberry),
+DietPi-based, amd64) — no VirtualBox / Hyper-V / VM hypervisor needed.
+
+The compose file ships in `sandbox/tools/docker-compose.yml`. SKILL.md
+encodes a **conditional** bootstrap that runs before any plugin
+testing:
+
+```bash
+# 1. Check current state — skip the rest if the container is already Up.
+docker ps --filter name=loxberry-sandbox --format '{{.Names}} {{.Status}}'
+
+# 2a. If a stopped container exists — just start it.
+docker compose -f sandbox/tools/docker-compose.yml start
+
+# 2b. If no container exists at all — pull + create.
+cd sandbox/tools && docker compose pull && docker compose up -d
+```
+
+The first `docker compose pull` is ~1.1 GB. After that, every run of
+the skill against a new plugin reuses the same container (state is
+persisted in named volumes — `docker compose down -v` is the only
+thing that wipes credentials/plugin installs).
+
+Once the sandbox is up, the skill installs the freshly-built plugin
+via the official LoxBerry installer, watches the daemon log + MQTT
+topics, and rebuilds → reinstalls until the daemon runs cleanly and
+data flows to the (in-container) MQTT broker as designed. See SKILL.md
+→ *Mandatory Final Steps → Sandbox bootstrap (conditional)* and
+*Test in the sandbox* for the full procedure, including the CLI
+install command, the SecurePIN seeding step, and the verification
+recipe.
+
+> **Requirements**: Docker Desktop running on the host (Windows /
+> macOS / Linux). The compose file sets `privileged: true` and
+> `cgroup: host` because the LoxBerry image runs systemd inside —
+> without those flags the container exits 255 in under a second.
+
+The deprecated **VirtualBox** alternative under
+`sandbox/tools/build-loxberry-vm.ps1` is kept for reference only —
+use the Docker path unless the task specifically requires a real
+LAN-attached LoxBerry host (e.g. Loxone Miniserver auto-discovery).
+
 ## Validation
 
 Validate the skill metadata with the AgentSkill validator available in your Codex environment, for example:
