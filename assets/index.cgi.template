@@ -90,8 +90,8 @@ if ($cgi->request_method eq "POST" && defined $cgi->param("save")) {
         # log file — anything the wrapper prints would otherwise corrupt
         # the HTTP response and Apache returns 500.
         # LoxBerry installs the daemon hook under <lbhomedir>/system/daemons/plugins/.
-        # Do not hardcode the LoxBerry install root — the installer's linter
-        # flags `/opt/loxberry` literals via grep -l.
+        # Do not hardcode the LoxBerry install root here — the installer's
+        # linter grep -l's daemon scripts for any literal install-root path.
         my $daemon = "$lbhomedir/system/daemons/plugins/{plugin}";
         if (-x $daemon) {
             system("$daemon restart >>'$lbplogdir/daemon-restart.log' 2>&1");
