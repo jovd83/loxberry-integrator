@@ -13,7 +13,8 @@ Create production-quality LoxBerry plugin repositories that bridge external devi
 2. Generate a complete, installable repository when enough information is available.
 3. Ask only for missing information that changes architecture, security, or device behavior. Otherwise use the defaults below and call them out.
 4. Keep generated code auditable: explicit configuration, no hidden credentials, predictable paths, and bounded retries.
-5. Validate the generated repository before presenting it.
+5. **Always generate plugin icons (all four sizes — `icon_64.png`, `icon_128.png`, `icon_256.png`, `icon_512.png`) and ship them under `icons/`.** Never skip this step, never leave it as a TODO, never assume the user will draw their own. Use Pillow's `ImageDraw` to render a flat, domain-specific tile (rounded-square background + a simple glyph that hints at the device or service) from a single source routine so all four sizes are visually consistent. This applies to every generated plugin, even minimal ones — without these files LoxBerry's installer substitutes generic defaults and the plugin renders as visually identical to every other un-iconed plugin in the user's UI.
+6. Validate the generated repository before presenting it.
 
 ## Required Inputs
 
@@ -175,14 +176,15 @@ python scripts/validate_plugin.py <generated-plugin-path>
 
 After scaffolding and validating the code, you MUST execute the following mandatory steps before finishing:
 
-1. **Zip the Plugin**: Package the generated LoxBerry plugin into a `.zip` file with the correct folder structure (the root of the ZIP must be the plugin directory matching the `FOLDER` configuration parameter).
-2. **Publish to GitHub**: Create a private GitHub repository for the plugin. Ensure it has a well-formatted `README.md`, an appropriate repository name, a clear description, and relevant repository topics.
-3. **Sandbox bootstrap (conditional)**: Make sure a dockerized LoxBerry sandbox is running on the host.
+1. **Generate the plugin icons.** Create all four sizes (`icons/icon_64.png`, `icon_128.png`, `icon_256.png`, `icon_512.png`) from a single Pillow `ImageDraw` source routine so they are visually consistent. Pick a flat, recognizable design that hints at the device or service (e.g. a mower silhouette for a mower plugin, a battery for a battery plugin). **This step is non-optional** — confirm the four files exist before moving on. If you skip it, LoxBerry will silently substitute its generic default icon and the plugin will be visually indistinguishable from every other un-iconed plugin in the user's *Plugin Management* tile grid. Sandbox-install verification: a successful icon install logs `<OK> Icons installed successfully.`; the failure mode is `<ERROR> ICON files: Icons could not be (completely) installed. Using some default icons.` — treat this error as a hard blocker, not a warning.
+2. **Zip the Plugin**: Package the generated LoxBerry plugin into a `.zip` file with the correct folder structure (the root of the ZIP must be the plugin directory matching the `FOLDER` configuration parameter). Confirm the icons made it into the ZIP with `python -m zipfile -l <plugin>-<version>.zip | grep icon_`.
+3. **Publish to GitHub**: Create a private GitHub repository for the plugin. Ensure it has a well-formatted `README.md`, an appropriate repository name, a clear description, and relevant repository topics.
+4. **Sandbox bootstrap (conditional)**: Make sure a dockerized LoxBerry sandbox is running on the host.
    - **Check first** with `docker ps --filter name=loxberry-sandbox --format '{{.Names}} {{.Status}}'`. If a row comes back with status `Up …`, **skip the rest of this step** — the sandbox is already running and ready.
    - If the container exists but is stopped (no row in `ps`, but `docker ps -a --filter name=loxberry-sandbox` shows it), bring it up with `docker compose -f sandbox/tools/docker-compose.yml start`.
    - If there is no `loxberry-sandbox` container at all, create one: requires Docker Desktop running, then `cd sandbox/tools && docker compose pull && docker compose up -d`. First pull is ~1.1 GB. The compose file (`sandbox/tools/docker-compose.yml`) sets the right `privileged: true` + `cgroup: host` flags for systemd-in-Docker on Docker Desktop / WSL2; without those, the LoxBerry container exits 255 in under a second.
    - The container ships LoxBerry 3.0.1.3 (DietPi base), mosquitto on `localhost:1883`, web UI on `http://localhost:18080` (Basic Auth `loxberry`/`loxberry`), and bind-mounts the freshly-built plugin ZIP at `/incoming/<plugin>-<version>.zip` ready to install.
-4. **Test in the sandbox**: Install the plugin via the official LoxBerry installer (SecurePIN is `1234` in the sandbox — set it on first use with `perl -e "print crypt(q{1234}, q{IG})" > /opt/loxberry/config/system/securepin.dat`). Idempotent install command (works for upgrades too):
+5. **Test in the sandbox**: Install the plugin via the official LoxBerry installer (SecurePIN is `1234` in the sandbox — set it on first use with `perl -e "print crypt(q{1234}, q{IG})" > /opt/loxberry/config/system/securepin.dat`). Idempotent install command (works for upgrades too):
 
    ```bash
    MSYS_NO_PATHCONV=1 docker exec loxberry-sandbox bash -c '
@@ -194,7 +196,7 @@ After scaffolding and validating the code, you MUST execute the following mandat
 
    Then open `http://localhost:18080/admin/plugins/<plugin>/index.cgi` and verify the page renders inside the LoxBerry shell (top navigation visible, no `Software error` page). Watch the daemon log at `/opt/loxberry/log/plugins/<plugin>/` and the MQTT topics with `docker exec loxberry-sandbox mosquitto_sub -h localhost -t '<prefix>/#' -v`. Iterate until the daemon runs cleanly and data flows as designed.
 
-5. **Publish + release**: `gh repo create` the project repo, push `main`, then `gh release create v<version>` and **attach the install ZIP as a release asset**. Keep the URLs in `release.cfg` / `prerelease.cfg` pointing at the asset (`…/releases/download/v<version>/<plugin>-<version>.zip`).
+6. **Publish + release**: `gh repo create` the project repo, push `main`, then `gh release create v<version>` and **attach the install ZIP as a release asset**. Keep the URLs in `release.cfg` / `prerelease.cfg` pointing at the asset (`…/releases/download/v<version>/<plugin>-<version>.zip`).
    - **PUBLIC** repo: the asset URL works for anonymous downloads — LoxBerry's "Install from URL" path works directly, and the auto-update mechanism (`AUTOUPDATE.RELEASECFG`) resolves.
    - **PRIVATE** repo: the asset URL returns HTTP 404 anonymously. LoxBerry's installer cannot fetch it and reports `CRITICAL: Plugin file does not exist`. The user must download the ZIP through the GitHub web UI / `gh release download` and upload it via *Plugin Management → Plugin Install → Choose File* (file upload, not URL). Document this clearly in the README if the project is private, or flip to public when you're ready for the URL path to work.
 
