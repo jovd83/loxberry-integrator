@@ -68,6 +68,11 @@ LoxBerry-Plugin-{name}/
       index.cgi
   templates/
     settings.html
+  icons/
+    icon_64.png
+    icon_128.png
+    icon_256.png
+    icon_512.png
   docs/
     LOXONE_CONFIG.md
 ```
@@ -112,6 +117,8 @@ Must follow:
 - Handle `SIGTERM` and `SIGINT` gracefully.
 - Keep network timeouts explicit.
 - Document every port the plugin listens on.
+- **Auto-register the MQTT topic prefix with the LoxBerry MQTT Gateway.** Any plugin in the `mqtt-bridge` (or `command-bridge` over MQTT) pattern MUST write `<lbpconfigdir>/mqtt_subscriptions.cfg` containing the plugin's topic pattern (e.g. `<prefix>/#`) on every daemon start. The built-in `mqttgateway.pl` watches that file with inotify and merges it into the active subscription list — no manual subscription step in the Gateway UI. Without this, freshly published topics appear in `mosquitto_sub` but never surface in the MQTT Gateway *Incoming Overview*, and the user cannot convert them to Virtual Inputs. See `register_mqtt_subscription()` in `references/integration-patterns.md → MQTT Bridge → Topic subscription auto-registration` for the canonical 6-line helper; expose the behavior behind a `register_mqtt_subscription: true` config checkbox (default on) so users who run their own MQTT-to-Loxone relay can turn it off.
+- **Ship plugin icons.** Every plugin MUST include `icons/icon_64.png`, `icons/icon_128.png`, `icons/icon_256.png`, and `icons/icon_512.png`. `plugininstall.pl` copies them to `/opt/loxberry/webfrontend/html/system/images/icons/<folder>/` and uses them in the *Plugin Management* tile grid and the top-navigation breadcrumb. If any of the four are missing, the installer logs `<ERROR> ICON files: Icons could not be (completely) installed. Using some default icons.` and substitutes generic LoxBerry defaults — your plugin then renders as visually identical to every other un-iconed plugin in the user's UI. Generate the four PNGs from the same source (a flat rounded-square tile + a domain-specific glyph works well; Pillow's `ImageDraw` is enough — no external graphics tool needed) and keep file sizes small (<10 KB per icon for simple flat designs).
 
 ## Output Response Contract
 
@@ -137,7 +144,9 @@ Before final delivery:
 6. Ensure daemon code handles shutdown and does not hardcode production LoxBerry paths.
 7. Ensure docs map every generated MQTT topic or command endpoint.
 8. Ensure generated README explains installation, configuration, logs, troubleshooting, and license.
-8. If a generated plugin path exists locally, run:
+9. Ensure the four icon files exist at `icons/icon_{64,128,256,512}.png` (LoxBerry substitutes generic defaults — and logs an `<ERROR>` — when any are missing).
+10. For MQTT-pattern plugins, ensure the daemon writes `<lbpconfigdir>/mqtt_subscriptions.cfg` (containing at minimum `<prefix>/#`) at startup so the built-in MQTT Gateway picks the topics up via inotify.
+11. If a generated plugin path exists locally, run:
 
 ```bash
 python scripts/validate_plugin.py <generated-plugin-path>
