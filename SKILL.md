@@ -178,7 +178,7 @@ After scaffolding and validating the code, you MUST execute the following mandat
 
 1. **Generate the plugin icons.** Create all four sizes (`icons/icon_64.png`, `icon_128.png`, `icon_256.png`, `icon_512.png`) from a single Pillow `ImageDraw` source routine so they are visually consistent. Pick a flat, recognizable design that hints at the device or service (e.g. a mower silhouette for a mower plugin, a battery for a battery plugin). **This step is non-optional** — confirm the four files exist before moving on. If you skip it, LoxBerry will silently substitute its generic default icon and the plugin will be visually indistinguishable from every other un-iconed plugin in the user's *Plugin Management* tile grid. Sandbox-install verification: a successful icon install logs `<OK> Icons installed successfully.`; the failure mode is `<ERROR> ICON files: Icons could not be (completely) installed. Using some default icons.` — treat this error as a hard blocker, not a warning.
 2. **Zip the Plugin**: Package the generated LoxBerry plugin into a `.zip` file with the correct folder structure (the root of the ZIP must be the plugin directory matching the `FOLDER` configuration parameter). Confirm the icons made it into the ZIP with `python -m zipfile -l <plugin>-<version>.zip | grep icon_`.
-3. **Publish to GitHub**: Create a private GitHub repository for the plugin. Ensure it has a well-formatted `README.md`, an appropriate repository name, a clear description, and relevant repository topics.
+3. **Publish to GitHub**: Create a private GitHub repository for the plugin. Ensure it has a well-formatted `README.md`, an appropriate repository name, a clear description, and relevant repository topics, following `references/github-repo-conventions.md`.
 4. **Sandbox bootstrap (conditional)**: Make sure a dockerized LoxBerry sandbox is running on the host.
    - **Check first** with `docker ps --filter name=loxberry-sandbox --format '{{.Names}} {{.Status}}'`. If a row comes back with status `Up …`, **skip the rest of this step** — the sandbox is already running and ready.
    - If the container exists but is stopped (no row in `ps`, but `docker ps -a --filter name=loxberry-sandbox` shows it), bring it up with `docker compose -f sandbox/tools/docker-compose.yml start`.
@@ -236,4 +236,5 @@ Do not write cross-agent shared memory from this skill. If reusable knowledge sh
 
 - `references/integration-patterns.md`: implementation patterns and daemon guidance.
 - `references/loxberry-api-reference.md`: LoxBerry paths, metadata, lifecycle, ports, and release rules.
+- `references/github-repo-conventions.md`: README, badges, topics, workflow, release and license rules for the plugin's GitHub repository.
 - `examples/example-request.md`: realistic input prompt for forward testing.
