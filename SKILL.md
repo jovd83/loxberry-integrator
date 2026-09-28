@@ -230,7 +230,7 @@ Use runtime memory for the current device brief, inferred assumptions, and unres
 
 Use project-local files only when the user asks to create or update a plugin repository or this skill package.
 
-Do not write cross-agent shared memory from this skill. If reusable knowledge should be shared beyond this skill, treat that as an explicit external shared-memory workflow.
+Do not write cross-agent shared memory from this skill. If reusable knowledge should be shared beyond this skill, record it in the agent's own memory (for example CLAUDE.md or AGENTS.md) as an explicit step.
 
 ## References
 
